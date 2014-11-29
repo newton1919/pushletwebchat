@@ -1,0 +1,90 @@
+{% load i18n %}
+{% load url from future %}
+<div class="panel panel-default hidden-xs hidden-sm">
+  <div class="panel-heading"><span class="label label-danger" style="font-size:15px;"><strong>{% trans "Appliance"%} {% trans "repair" %}</strong></span></div>
+  <div class="panel-body">
+    <div class="list-group sidenav">
+	  
+<!-- 	  <a href="#" class="list-group-item">{% trans "Washer repair" %}</a> -->
+<!-- 	  <a href="#" class="list-group-item">{% trans "Fridge repair" %}</a> -->
+<!-- 	  <a href="#" class="list-group-item">{% trans "Microwave Oven repair" %}</a> -->
+<!-- 	  <a href="#" class="list-group-item">{% trans "Heater repair" %}</a> -->
+
+        <div class="row">
+	  	  <div class="col-lg-12">
+	  		<div class="alert alert-danger confirm-type-message" role="alert" style="display:none">
+	  		  <span>{% trans "Confirm" %}</span>
+	  		  <div class="pull-right">
+			    <button type="button" class="btn btn-danger btn-sm btn-no">{% trans "no" %}</button>
+				<button type="button" class="btn btn-primary btn-sm btn-yes">{% trans "yes" %}</button>
+			  </div>
+	  		</div>
+	  	  </div>
+	  	</div>
+	  
+	  {%for appliance in appliance_list%}
+	    <a data-ref="{{appliance.id}}" href="/{{role}}appliance/{{appliance.id}}/index" class="list-group-item list-appliance-item">
+	      <strong>{% trans appliance.type %}</strong>
+	      {%if role == "admin/"%}
+	      <i class="icon-trash pull-right"></i>
+	      {%endif%}
+	    </a>
+	  {%endfor%}
+	  {% if role %}
+	    <a data-toggle="modal" data-target=".myModal" href="/admin/appliance_type/create" class="btn btn-default btn-block"><i class="icon-plus"></i> {% trans "add appliance type" %}</a>
+	  {%endif%}
+	</div>
+  </div>
+</div>
+<div class="panel panel-default hidden-xs hidden-sm">
+  <div class="panel-heading">
+    <span class="label label-danger" style="font-size:15px;"><strong>{% trans "Company" %}</strong></span>
+  </div>
+  <div class="panel-body">
+    <div class="list-group sidenav">
+	  <a href="/{{role}}company/index" class="list-group-item">
+	    <strong>{% trans "Overview" %}</strong>
+	  </a>
+	  <div class="panel-group" id="accordion">
+		  <div class="panel">
+		    <div class="panel-heading">
+		      <h4 class="panel-title">
+		        <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne">
+		          {% trans "Contact" %}
+		        </a>
+		      </h4>
+		    </div>
+		    <div id="collapseOne" class="panel-collapse collapse in">
+		      <div class="panel-body">
+				<div class="list-group">
+				  <a class="list-group-item">
+				    <h5 class="list-group-item-heading">{% trans "Contact people" %}</h5>
+				    <p class="list-group-item-text">{{company_info.contact_people}}</p>
+				  </a>
+				  <a class="list-group-item">
+				    <h5 class="list-group-item-heading">{% trans "Telphone" %}</h5>
+				    <p class="list-group-item-text">{{company_info.telphone}}</p>
+				  </a>
+				  <a class="list-group-item">
+				    <h5 class="list-group-item-heading">{% trans "Address" %}</h5>
+				    <p class="list-group-item-text">{{company_info.address}}</p>
+				  </a>
+				</div>
+		      </div>
+		    </div>
+		  </div>
+	  </div>
+	</div>
+  </div>
+</div>
+<div class="panel panel-default hidden-xs hidden-sm">
+  <div class="panel-heading">
+    <span class="label label-danger" style="font-size:15px;"><strong>{% trans "Friendly Link" %}</strong></span>
+  </div>
+  <div class="panel-body">
+    <div class="list-group sidenav">
+	  <a href="http://www.baidu.com" class="list-group-item" target="_blank"><strong>{% trans "Baidu" %}</strong></a>
+	  <a href="http://www.sina.com.cn" class="list-group-item"  target="_blank"><strong>{% trans "Sina" %}</strong></a>
+	</div>
+  </div>
+</div>

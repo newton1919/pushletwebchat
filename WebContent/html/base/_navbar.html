@@ -1,0 +1,52 @@
+{% load i18n %}
+{% load url from future %}
+{% load static from staticfiles %}
+{% block navbar %}
+<!-- Navigation -->
+<div class="container">
+<div class="row">
+  <div class="col-lg-10 col-md-10 col-xs-10 col-lg-offset-1 col-md-offset-1 col-xs-offset-1">
+	<div class="navbar  navbar-default  my-navbar" role="navigation">
+        <div class="container">
+          <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/"><i class="icon-windows"></i> <strong>{%trans "iRepair" %}</strong></a>
+          </div>
+          <div class="navbar-collapse collapse">
+            <ul class="nav navbar-nav">
+              <li><a href="{% url 'gallery:index' %}"><i class="icon-home"></i> <strong>{%trans 'Gallery'%}</strong></a></li>
+              <li><a href="/{{role}}company/contact"><i class="icon-comments"></i> <strong>{%trans 'Contact'%}</strong></a></li>
+              <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="icon-laptop"></i> <strong>{%trans 'Appliance'%}</strong> <b class="caret"></b></a>
+                <ul class="dropdown-menu">
+                  {%for appliance in appliance_list%}
+                  <li><a href="/{{role}}appliance/{{appliance.id}}/index"><strong>{%trans appliance.type%}</strong></a></li>
+                  <li class="divider"></li>
+                  {%endfor%}
+                </ul>
+              </li>
+              
+              <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="icon-globe"></i> <strong>语言(Language)</strong> <b class="caret"></b></a>
+                <ul class="dropdown-menu">
+                  <li><a class="btn language" data-language="zh-cn"><strong>中文</strong></a></li>
+                  <li><a class="btn language" data-language="en"><strong>English</strong></a></li>
+                </ul>
+              </li>
+            </ul>
+            {% if request.user.is_superuser %}
+            {% include 'admin/_userPanel.html' %}
+            {% endif %}
+          </div><!--/.nav-collapse -->
+        </div>
+	</div>
+<!-- End Navigation -->
+  </div>
+</div>
+</div>
+{% endblock %}
