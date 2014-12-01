@@ -48,6 +48,18 @@ public class UserDao extends HibernateUtil{
 	}
 	
 	@SuppressWarnings("unchecked")
+	public UserMO findUserbyId(String userUuid) {
+		Session session = sessionFactory.getCurrentSession();
+		Transaction transaction = session.beginTransaction();
+		
+		Criteria criteria = session.createCriteria(UserMO.class);
+		Criteria criteria2 = criteria.add(Restrictions.eq("userUuid", userUuid));
+		UserMO userMO = (UserMO)criteria2.uniqueResult();
+		transaction.commit();
+		return userMO;
+	}
+	
+	@SuppressWarnings("unchecked")
 	public UserMO findUserbypushSessionId(String pushSessionId) {
 		Session session = sessionFactory.getCurrentSession();
 		Transaction transaction = session.beginTransaction();

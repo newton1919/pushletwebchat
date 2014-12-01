@@ -84,7 +84,7 @@
 		content: "\00a0";
 		display: block;
 		position: absolute;
-		top: 20px;
+		top: 5px;
 		left: -10px;
 		width: 0;
 		height: 0;
@@ -107,7 +107,7 @@
 		content: "\00a0";
 		display: block;
 		position: absolute;
-		top: 20px;
+		top: 5px;
 		right: -10px;
 		width: 0;
 		height: 0;
@@ -123,9 +123,9 @@
 <script type="text/javascript" src="html/js/util.js"></script>
 <script type="text/javascript" src="html/js/hashmap.js"></script>
 <script type="text/javascript">
-	function joinChat(userUuid) {
+	function joinChat() {
 		p_subscribe('/chat', "");
-		p_publish('/chat', 'action', 'enter', 'userUuid', userUuid, "userName", myName);
+		p_publish('/chat', 'action', 'enter', 'userUuid', myUuid, "userName", myName);
 	}
 	
 	function onNack(event) {
@@ -136,7 +136,7 @@
 	// fetch sessionId of myself
 	function onJoinListenAck(event) {
 		p_id = event.get("p_id");
-		p_publish('/queryOnline', 'to', p_id, 'userUuid', userUuid);
+		p_publish('/queryOnline', 'userUuid', myUuid);
 	}
 	
 	function onData(event) {
@@ -151,20 +151,18 @@
 			var message = event.get('msg');
 			handleComeMsg(fromName, message);
 		} else if (action == 'enter') {
-			var enter_id = event.get("p_id");
 			var enter_uuid = event.get("userUuid");
 			var enter_name = event.get("userName");
 			
-			if (enter_uuid != userUuid) {
-				addOnlineUser(enter_id, enter_uuid, enter_name);
+			if (enter_uuid != myUuid) {
+				addOnlineUser(enter_uuid, enter_name);
 			}
 		} else if (action == 'exit') {
-			var exit_id = event.get("p_id");
 			var exit_uuid = event.get("userUuid");
 			var exit_name = event.get("userName");
 			
-			if (exit_uuid != userUuid) {
-				removeOfflineUser(exit_id, exit_uuid, exit_name);
+			if (exit_uuid != myUuid) {
+				removeOfflineUser(exit_uuid, exit_name);
 			}
 		} else if (action == 'online') {
 			var onlinePersonList = event.get("onlinePersonList");
@@ -172,7 +170,7 @@
 			updateUserListPanel(onlinePersonList);
 			p_unsubscribe(event.get("p_sid"));
 			//服务器返回在线列表，此时加入聊天
-			joinChat(userUuid);
+			joinChat();
 		}
 		
 
@@ -189,34 +187,30 @@
 			if (userUuid2 == "" || userName2 == myName) {
 				continue;
 			}
-			var person_html = $('<a id="'+ person.p_id +'" class="list-group-item" onclick="chatTo(event)">'+ userName2 +'</a>');
+			var person_html = $('<a id="'+ userUuid2 +'" class="list-group-item" onclick="chatTo(event)">'+ userName2 +'</a>');
 			$("#userListPanel").append(person_html);
-			p_map.put(userName2, person.p_id);
+			p_map.put(userName2, userUuid2);
 		}
 	}
-	function addOnlineUser(enter_id, enter_uuid, enter_name) {
-		if (p_map.keySet().indexOf(enter_name)>=0) {
-			var oldPID = p_map.get(enter_name);
-			console.log(oldPID);
-			$("#userListPanel").find("#"+oldPID).remove();
-			//update p_map
-			p_map.put(enter_name, enter_id);
+	function addOnlineUser(enter_uuid, enter_name) {
+		if (p_map.keySet().indexOf(enter_name) == -1) {
+			var person_html = $('<a id="'+ enter_uuid + '" class="list-group-item" onclick="chatTo(event)">'+ enter_name +'</a>');
+			$("#userListPanel").append(person_html);
+			p_map.put(enter_name, enter_uuid);
 		}
-		var person_html = $('<a id="'+ enter_id + '" class="list-group-item" onclick="chatTo(event)">'+ enter_name +'</a>');
-		$("#userListPanel").append(person_html);
 	}
 	//somebody offline
-	function removeOfflineUser(exit_id, exit_uuid, exit_name) {
-		$("#userListPanel").find("#" + exit_id).remove();
+	function removeOfflineUser(exit_uuid, exit_name) {
+		$("#userListPanel").find("#" + exit_uuid).remove();
 		p_map.remove(exit_name);
 	}
 	
 	function chatTo(event){
-		var toUserPID = event.target.id;
+		var toUserUuid = event.target.id;
 		var toUserName = event.target.innerHTML;
 		$(".panel-chat").css("display", "block");
 		$(".toUserName").html(toUserName);
-		$(".toUserName").attr("id", toUserPID);
+		$(".toUserName").attr("id", toUserUuid);
 		
 	}
 	function closeChatDialog() {
@@ -224,8 +218,8 @@
 	}
 	
 	function sendMsg(event){
-		var toUserPID = $(".toUserName").attr("id");
-		p_publish('/chat', 'action', 'send', 'from', myName, 'p_to', toUserPID, 'msg', document.getElementById("msgContent").value);
+		var toUserUuid = $(".toUserName").attr("id");
+		p_publish('/chat', 'action', 'send', 'from', myName, 'p_to', toUserUuid, 'msg', document.getElementById("msgContent").value);//todo
 		$("#msgContent").val("");
 		$("#msgContent").focus();
 	}
@@ -269,18 +263,19 @@
 	//var nick=getPageParameter('nick', 'anon');
 	var p_id = "";
 	var p_map = new Map();
-	var userUuid = "";
+	var myUuid = "";
 	var myName = "";
 	$(document).ready(function(){
-		userUuid = $("#userUuid").text();
+		myUuid = $("#userUuid").text();
 		myName = $("#userName").text();
+		
 		p_join_listen('/queryOnline');
 		
 		
 		//绑定beforeunload事件
 		$(window).bind('beforeunload',function(){
 			//return '您已经登录，确定注销并离开此页面吗？';
-			p_publish('/chat', 'action', 'exit', 'userUuid', userUuid, "userName", myName);
+			p_publish('/chat', 'action', 'exit', 'userUuid', myUuid, "userName", myName);
 		}); 
 		
 	});

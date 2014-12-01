@@ -42,12 +42,17 @@ public class ControllerExtend extends Controller{
 					//发送当前用户列表给client
 					Event onlineevent = pullEvent();
 					Dispatcher.getInstance().unicast(onlineevent, p_id);
-				}
+				} 
 				//end
 				
 				// Event may be targeted to specific user (p_to field)
 				String to = aCommand.reqEvent.getField(P_TO);
 				if (to != null) {
+					//如果是特定的聊天应用，to实际是指userUuid,所以要转换成p_id,由后端动态判断
+					if (subject.equals("/chat") && aCommand.reqEvent.getField("action").equals("send")) {
+						UserDao userDao = new UserDao();
+						to = userDao.findUserbyId(to).getPushSessionId();
+					}
 					Dispatcher.getInstance().unicast(aCommand.reqEvent, to);
 				} else {
 					// No to: multicast
