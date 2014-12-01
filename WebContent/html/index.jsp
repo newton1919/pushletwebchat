@@ -74,9 +74,9 @@
 		min-height: 18px;
 		margin: 0 0 0 60px;
 		padding: 1px 10px 1px 10px;
-		-moz-border-radius: 10px;
-		-webkit-border-radius: 10px;
-		border-radius: 10px;
+		-moz-border-radius: 8px;
+		-webkit-border-radius: 8px;
+		border-radius: 8px;
 		background-color: #fff;
 		word-wrap: break-word;
 	}
@@ -84,11 +84,11 @@
 		content: "\00a0";
 		display: block;
 		position: absolute;
-		top: 5px;
-		left: -10px;
+		top: 6px;
+		left: -6px;
 		width: 0;
 		height: 0;
-		border-width: 10px 10px 10px 0;
+		border-width: 6px 6px 6px 0;
 		border-style: solid;
 		border-color: transparent #fff transparent transparent;
 	}
@@ -97,9 +97,9 @@
 		min-height: 18px;
 		margin: 0 60px 0 0;
 		padding: 1px 10px 1px 10px;
-		-moz-border-radius: 10px;
-		-webkit-border-radius: 10px;
-		border-radius: 10px;
+		-moz-border-radius: 8px;
+		-webkit-border-radius: 8px;
+		border-radius: 8px;
 		background-color: #A6DADC;
 		word-wrap: break-word;
 	}
@@ -107,11 +107,11 @@
 		content: "\00a0";
 		display: block;
 		position: absolute;
-		top: 5px;
-		right: -10px;
+		top: 6px;
+		right: -6px;
 		width: 0;
 		height: 0;
-		border-width: 10px 0 10px 10px;
+		border-width: 6px 0 6px 6px;
 		border-style: solid;
 		border-color: transparent transparent transparent #A6DADC;
 	}
@@ -220,6 +220,24 @@
 	function sendMsg(event){
 		var toUserUuid = $(".toUserName").attr("id");
 		p_publish('/chat', 'action', 'send', 'from', myName, 'p_to', toUserUuid, 'msg', document.getElementById("msgContent").value);//todo
+		//add my talk to chat panel
+		var msg_go = '<li class="ownerSession clear" data-user="{to_user}">\
+								<div class="sessionTime">{time}</div>\
+							  	<div class="owner">\
+							      	<img src="{own_head}" width="50" height="50" alt="">\
+							  	</div>\
+							    <blockquote class="right">\
+							      <p>{msg}</p>\
+							    </blockquote>\
+							</li>';
+		var data_after = {"time":"2014", "to_user":toUserUuid ,"msg":document.getElementById("msgContent").value, "own_head":"html/images/cat_uncle_small.jpg"};
+		var msg_go_after = substitute(msg_go, data_after);
+		var $ownerSession = $(msg_go_after);
+		$("#chat_content2").append($ownerSession);
+		$('#chat_content2').stop().animate({
+			  scrollTop: $("#chat_content2")[0].scrollHeight
+			}, 800);
+		
 		$("#msgContent").val("");
 		$("#msgContent").focus();
 	}
