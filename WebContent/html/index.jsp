@@ -208,10 +208,19 @@
 	function chatTo(event){
 		var toUserUuid = event.target.id;
 		var toUserName = event.target.innerHTML;
+		toUserName = toUserName.split("<")[0];
 		$(".panel-chat").css("display", "block");
 		$(".toUserName").html(toUserName);
 		$(".toUserName").attr("id", toUserUuid);
-		
+		//pull msg unread
+		var msgArray = unreadMsgMap.get(toUserUuid);
+		for (var index in msgArray) {
+			var msg = msgArray[index];
+			displayComeMsgToChatPanel(toUserName, msg);
+		}
+		$("a#"+toUserUuid+" .badge").remove();
+		//内存清空未读消息
+		unreadMsgMap.remove(toUserUuid);
 	}
 	function closeChatDialog() {
 		$(".panel-chat").css("display", "none");
@@ -254,33 +263,54 @@
 	  });
 	}
 	
+	 
+	function displayComeMsgToChatPanel(fromName, message) {
+		var msg_come = '<li class="guestSession clear" data-user="{msg_from}">\
+			<div class="sessionTime">{time}</div>\
+		  	<div class="guest">\
+		      	<img src="{guest_head}" width="50" height="50" alt="">\
+		  	</div>\
+		    <blockquote class="left">\
+		      <p>{msg}</p>\
+		    </blockquote>\
+		</li>';
+		var data_after = {"time":"2014-12-01", "msg_from":fromName,"msg":message, "guest_head":"html/images/asha.jpg"};
+		var msg_come_after = substitute(msg_come, data_after);
+		var $guestSession = $(msg_come_after);
+		$("#chat_content2").append($guestSession);
+		$('#chat_content2').stop().animate({
+			  scrollTop: $("#chat_content2")[0].scrollHeight
+			}, 800);
+	}
 	//显示来得消息todo
 	function handleComeMsg(fromName, message) {
 		if ($(".panel-chat").css("display") == "block" && fromName == $(".toUserName").html()) {
-			var msg_come = '<li class="guestSession clear" data-user="{msg_from}">\
-				<div class="sessionTime">{time}</div>\
-			  	<div class="guest">\
-			      	<img src="{guest_head}" width="50" height="50" alt="">\
-			  	</div>\
-			    <blockquote class="left">\
-			      <p>{msg}</p>\
-			    </blockquote>\
-			</li>';
-			var data_after = {"time":"2014-12-01", "msg_from":fromName,"msg":message, "guest_head":"html/images/asha.jpg"};
-			var msg_come_after = substitute(msg_come, data_after);
-			var $guestSession = $(msg_come_after);
-			$("#chat_content2").append($guestSession);
-			$('#chat_content2').stop().animate({
-				  scrollTop: $("#chat_content2")[0].scrollHeight
-				}, 800);
+			displayComeMsgToChatPanel(fromName, message);
 		} else {
 			//将消息显示为通知，因为消息来源不是当前聊天用户todo
+			var fromUuid = p_map.get(fromName);
+			var badge = $("a#"+fromUuid).find(".badge");
+			if (badge.length > 0) {
+				var unreadMsgCount = badge.text();
+				badge.html(parseInt(unreadMsgCount) + 1);
+				//将未读信息加入内存中
+				var msgArray = unreadMsgMap.get(fromUuid);
+				msgArray.push(message);
+			} else {
+				var newBadge = $('<span class="badge">1</span>');
+				$("a#"+fromUuid).append(newBadge);
+				//将未读信息加入内存中
+				var msgArray = new Array();
+				msgArray.push(message);
+				unreadMsgMap.put(fromUuid, msgArray);
+			}
 		}
 	}
 	//js开始执行的地方
 	//var nick=getPageParameter('nick', 'anon');
 	var p_id = "";
 	var p_map = new Map();
+	var unreadMsgMap = new Map();
 	var myUuid = "";
 	var myName = "";
 	$(document).ready(function(){
@@ -313,7 +343,10 @@
   	  	  	  <a href="#" class="list-group-item">tom</a>
 	          <a href="#" class="list-group-item">jack</a>
 	          <a href="#" class="list-group-item">helen</a>
-	          <a href="#" class="list-group-item">bob</a>
+	          <a href="#" class="list-group-item">
+	         	<span class="badge">14</span>
+	         	bob
+	          </a>        
   	  	  	</div>
   	  	  </div>
   	  	</div>
