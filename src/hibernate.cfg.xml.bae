@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-configuration PUBLIC "-//Hibernate/Hibernate Configuration DTD 3.0//EN"
+                                         "http://hibernate.sourceforge.net/hibernate-configuration-3.0.dtd">
+<hibernate-configuration>
+ <session-factory name="">
+  <property name="hibernate.connection.driver_class">com.mysql.jdbc.Driver</property>
+  <property name="hibernate.connection.password">wrFiTnHWkqiaNyPuYGl1CcXgHk8uFFtv</property>
+  <property name="hibernate.connection.url">jdbc:mysql://sqld.duapp.com:4050/LQeogZAlzXCXuvxjIzms</property>
+  <property name="hibernate.connection.username">xCpkKDzb8hHchX4BW5v4bCaI</property>
+  <property name="hibernate.dialect">org.hibernate.dialect.MySQLDialect</property>
+  <!-- Echo all executed SQL to stdout -->
+  <property name="show_sql">true</property>
+  <!-- Drop and re-create the database schema on startup -->
+  <property name="hbm2ddl.auto">update</property>
+  <property name="current_session_context_class">thread</property>
+  <mapping resource="hibernate.hbm.xml"/>
+ </session-factory>
+</hibernate-configuration>

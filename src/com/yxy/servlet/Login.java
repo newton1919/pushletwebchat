@@ -17,6 +17,14 @@ import com.yxy.mo.UserMO;
  */
 @WebServlet("/login")
 public class Login extends HttpServlet {
+	@Override
+	public void init() throws ServletException {
+		// TODO Auto-generated method stub
+		//实例化一个单例对象用于保存userUUid和pushlet sessionid的映射
+		
+		super.init();
+	}
+
 	private static final long serialVersionUID = 1L;
        
     /**

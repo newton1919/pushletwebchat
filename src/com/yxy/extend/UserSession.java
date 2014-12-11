@@ -1,18 +1,17 @@
 package com.yxy.extend;
 
-import com.yxy.mo.UserMO;
+import java.util.concurrent.ConcurrentHashMap;
 
-import nl.justobjects.pushlet.core.Session;
-
-public class UserSession extends Session{
-	private UserMO user;
-
-	public UserMO getUser() {
-		return user;
+public class UserSession {
+	private static UserSession userSession = null;
+	public ConcurrentHashMap<String, String> userWithPushletSession = new ConcurrentHashMap<String, String>();
+	private UserSession(){
 	}
-
-	public void setUser(UserMO user) {
-		this.user = user;
+	public static UserSession getInstance() {
+		if (userSession == null) {
+			userSession = new UserSession();
+		}
+		return userSession;
 	}
 	
 }

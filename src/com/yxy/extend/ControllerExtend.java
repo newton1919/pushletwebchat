@@ -1,5 +1,8 @@
 package com.yxy.extend;
 
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -37,8 +40,10 @@ public class ControllerExtend extends Controller{
 				//处理额外的逻辑userUuid 和 p_id对应
 				if ( subject.equals("/queryOnline")) {
 					String userUuid = aCommand.reqEvent.getField("userUuid");
-					UserDao userDao = new UserDao();
-					userDao.updateUserWithpushSessionId(userUuid, p_id);
+					//UserDao userDao = new UserDao();
+					//userDao.updateUserWithpushSessionId(userUuid, p_id);
+					ConcurrentHashMap<String, String> userSessionMap = UserSession.getInstance().userWithPushletSession;
+					userSessionMap.put(userUuid, p_id);
 					//发送当前用户列表给client
 					Event onlineevent = pullEvent();
 					Dispatcher.getInstance().unicast(onlineevent, p_id);
@@ -50,8 +55,10 @@ public class ControllerExtend extends Controller{
 				if (to != null) {
 					//如果是特定的聊天应用，to实际是指userUuid,所以要转换成p_id,由后端动态判断
 					if (subject.equals("/chat") && aCommand.reqEvent.getField("action").equals("send")) {
-						UserDao userDao = new UserDao();
-						to = userDao.findUserbyId(to).getPushSessionId();
+						//UserDao userDao = new UserDao();
+						//to = userDao.findUserbyId(to).getPushSessionId();
+						ConcurrentHashMap<String, String> userSessionMap = UserSession.getInstance().userWithPushletSession;
+						to = userSessionMap.get(to);
 					}
 					Dispatcher.getInstance().unicast(aCommand.reqEvent, to);
 				} else {
@@ -85,10 +92,19 @@ public class ControllerExtend extends Controller{
 			JSONObject obj = new JSONObject();
 			try {
 				String p_id = session.getId();
-				UserMO user = userDao.findUserbypushSessionId(p_id);
-				if (user != null) {
+				//UserMO user = userDao.findUserbypushSessionId(p_id);
+				ConcurrentHashMap<String, String> userSessionMap = UserSession.getInstance().userWithPushletSession;
+				String userUuid = null;
+				for(Entry<String, String> entry: userSessionMap.entrySet()) {
+					if (p_id.equals(entry.getValue())) {
+						userUuid = entry.getKey();
+						break;
+					}
+				}
+				if (userUuid != null) {
 					obj.put("p_id", p_id);
-					obj.put("userUuid", user.getUserUuid());
+					obj.put("userUuid", userUuid);
+					UserMO user = userDao.findUserbyId(userUuid);
 					obj.put("userName", user.getUserName());
 					obj.put("online", user.isOnline());
 				} else {
