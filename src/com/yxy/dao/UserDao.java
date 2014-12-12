@@ -19,7 +19,8 @@ public class UserDao extends HibernateUtil{
 	}
 	
 	public void createUser(String userName, String password) {
-		Session session = sessionFactory.getCurrentSession();
+		//Session session = sessionFactory.getCurrentSession();
+		Session session = sessionFactory.openSession();
 		Transaction transaction = session.beginTransaction();
 		
 		UserMO newUser = new UserMO();
@@ -29,63 +30,76 @@ public class UserDao extends HibernateUtil{
 		newUser.setUserName(userName);
 		session.save(newUser);
 		transaction.commit();
+		session.close();
 	}
 	
 	@SuppressWarnings("unchecked")
 	public UserMO findUserbyName(String userName) {
-		Session session = sessionFactory.getCurrentSession();
+		//Session session = sessionFactory.getCurrentSession();
+		//for bae,must not be long connected session
+		Session session = sessionFactory.openSession();
 		Transaction transaction = session.beginTransaction();
 		
 		Criteria criteria = session.createCriteria(UserMO.class);
 		Criteria criteria2 = criteria.add(Restrictions.eq("userName", userName));
 		List<UserMO> userList = criteria2.list();
 		transaction.commit();
+		session.close();
 		if (userList == null || userList.isEmpty()) {
 			return null;
 		} else {
 			return userList.get(0);
 		}
+		
 	}
 	
 	@SuppressWarnings("unchecked")
 	public UserMO findUserbyId(String userUuid) {
-		Session session = sessionFactory.getCurrentSession();
+		//Session session = sessionFactory.getCurrentSession();
+		Session session = sessionFactory.openSession();
 		Transaction transaction = session.beginTransaction();
 		
 		Criteria criteria = session.createCriteria(UserMO.class);
 		Criteria criteria2 = criteria.add(Restrictions.eq("userUuid", userUuid));
 		UserMO userMO = (UserMO)criteria2.uniqueResult();
 		transaction.commit();
+		session.close();
 		return userMO;
 	}
 	
 	@SuppressWarnings("unchecked")
 	public UserMO findUserbypushSessionId(String pushSessionId) {
-		Session session = sessionFactory.getCurrentSession();
+		//Session session = sessionFactory.getCurrentSession();
+		Session session = sessionFactory.openSession();
 		Transaction transaction = session.beginTransaction();
 		
 		Criteria criteria = session.createCriteria(UserMO.class);
 		Criteria criteria2 = criteria.add(Restrictions.eq("pushSessionId", pushSessionId));
 		List<UserMO> userList = criteria2.list();
 		transaction.commit();
+		session.close();
 		if (userList == null || userList.isEmpty()) {
 			return null;
 		} else {
 			return userList.get(0);
 		}
+		
 	}
 	
 	public void updateUserWithpushSessionId(String userUuid, String pushSessionId) {
-		Session session = sessionFactory.getCurrentSession();
+		//Session session = sessionFactory.getCurrentSession();
+		Session session = sessionFactory.openSession();
 		Transaction transaction = session.beginTransaction();
 		UserMO user = (UserMO)session.get(UserMO.class, userUuid);
 		user.setPushSessionId(pushSessionId);
 		transaction.commit();
+		session.close();
 	}
 	
 	@SuppressWarnings("unchecked")
 	public UserMO loginUser(String userName, String password) {
-		Session session = sessionFactory.getCurrentSession();
+		//Session session = sessionFactory.getCurrentSession();
+		Session session = sessionFactory.openSession();
 		Transaction transaction = session.beginTransaction();
 		
 		Criteria criteria = session.createCriteria(UserMO.class);
@@ -93,6 +107,7 @@ public class UserDao extends HibernateUtil{
 									 .add(Restrictions.eq("password", password));
 		List<UserMO> userList = criteria2.list();
 		transaction.commit();
+		session.close();
 		if (userList == null || userList.isEmpty()) {
 			return null;
 		} else {

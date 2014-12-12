@@ -24,6 +24,12 @@ public class Register extends HttpServlet{
 		try {
 			String userName = req.getParameter("userName");
 			String password = req.getParameter("password");
+			String password2 = req.getParameter("password2");
+			if (!password.equals(password2)) {
+				req.setAttribute("error", "second password mismatch the first");
+				req.getRequestDispatcher("/html/register.jsp").forward(req, resp);
+				return;
+			}
 			UserDao userDao = new UserDao();
 			if(userDao.findUserbyName(userName) != null) {
 				req.setAttribute("error", "userName existed,try another name");

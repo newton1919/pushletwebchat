@@ -226,33 +226,10 @@
 				continue;
 			}
 			var person_html = $('<a id="' + userUuid2
-					+ '" class="list-group-item" data-bind="click:chatToUser">'
+					+ '" class="list-group-item" onclick="chatTo(event)">'
 					+ userName2 + '</a>');
 			$("#userListPanel").append(person_html);
 			p_map.put(userName2, userUuid2);
-			//新增绑定
-			var newViewModel = {
-				chatToUser: function(data, event) {//todo
-					ViewModel.toUserUuid(event.target.id);
-					ViewModel.toUserName(event.target.innerHTML);
-					$(".panel-chat").css("display", "block");
-					ViewModel.chatMsgs(allMsgMap.get(event.target.id));
-					/*
-					//pull msg unread
-					var toUserName = ViewModel.toUserName().split("<")[0];
-					var toUserUuid = ViewModel.toUserUuid();
-					var msgArray = unreadMsgMap.get(toUserUuid);
-					for ( var index in msgArray) {
-						var msg = msgArray[index];
-						displayComeMsgToChatPanel(toUserName, msg);
-					}
-					$("a#" + toUserUuid + " .badge").remove();
-					//内存清空未读消息
-					unreadMsgMap.remove(toUserUuid);
-					console.log("##############");*/
-				},
-			};
-			ko.applyBindings(newViewModel, document.getElementById(userUuid2));
 		}
 	}
 	function addOnlineUser(enter_uuid, enter_name) {
@@ -295,7 +272,7 @@
 		var toUserUuid = $(".toUserName").attr("id");
 		var msgToSend = encodeUTF8(document.getElementById("msgContent").value);
 		p_publish('/chat', 'action', 'send', 'from', myName, 'p_to',
-				toUserUuid, 'msg', msgToSend);
+				toUserUuid, 'msg', msgToSend);//todo
 		//add my talk to chat panel
 		var msg_go = '<li class="ownerSession clear" data-user="{to_user}">\
 								<div class="sessionTime">{time}</div>\
@@ -321,21 +298,6 @@
 
 		$("#msgContent").val("");
 		$("#msgContent").focus();
-		//将发送的消息存入内存map中
-		var msgsWithUser = allMsgMap.get(toUserUuid);
-		var msgObj = {
-				"direct": "go",
-				"read": "yes",
-				"msg": document.getElementById("msgContent").value,
-				"time": "2014",
-		};
-		if (typeof(msgsWithUser) == "undefined") {
-			var msgArray = new Array();	
-			msgArray.push(msgObj);
-			allMsgMap.put(toUserUuid, msgArray);
-		} else {
-			msgsWithUser.push(msgObj);
-		}
 	}
 
 	/**
@@ -373,37 +335,15 @@
 			scrollTop : $("#chat_content2")[0].scrollHeight
 		}, 800);
 	}
-	
-	function storeComeMsgToMap(fromUuid, message, readTag) {
-		//将 来的消息放入内容map中
-		var msgsWithUser = allMsgMap.get(fromUuid);
-		var msgObj = {
-				"direct": "come",
-				"read": readTag,
-				"msg": message,
-				"time": "2014-12-01",
-				"head": "html/images/asha.jpg",
-		};
-		if (typeof(msgsWithUser) == "undefined") {
-			var msgArray = new Array();	
-			msgArray.push(msgObj);
-			allMsgMap.put(fromUuid, msgArray);
-		} else {
-			msgsWithUser.push(msgObj);
-		}
-		//end
-	}
-	//显示来得消息
+	//显示来得消息todo
 	function handleComeMsg(fromName, messageCome) {
 		var message = decodeUTF8(messageCome);
-		var fromUuid = p_map.get(fromName);
-		
 		if ($(".panel-chat").css("display") == "block"
 				&& fromName == $(".toUserName").html()) {
 			displayComeMsgToChatPanel(fromName, message);
-			storeComeMsgToMap(fromUuid, message, "yes");
 		} else {
-			//将消息显示为通知，因为消息来源不是当前聊天用户
+			//将消息显示为通知，因为消息来源不是当前聊天用户todo
+			var fromUuid = p_map.get(fromName);
 			var badge = $("a#" + fromUuid).find(".badge");
 			if (badge.length > 0) {
 				var unreadMsgCount = badge.text();
@@ -419,7 +359,6 @@
 				msgArray.push(message);
 				unreadMsgMap.put(fromUuid, msgArray);
 			}
-			storeComeMsgToMap(fromUuid, message, "no");
 		}
 	}
 	
@@ -429,19 +368,14 @@
 	var p_id = "";
 	var p_map = new Map();
 	var unreadMsgMap = new Map();
-	var allMsgMap = new Map();
 	var myUuid = "";
 	var myName = "";
 	$(document).ready(
 			function() {
-				ViewModel = {
-					myOwnName: ko.observable($("#userName").text()),
-					toUserUuid: ko.observable("none"),
-					toUserName: ko.observable("<strong>xxx</strong>"),
-					chatMsgs: ko.observableArray([]),
-					//todo
+				function ViewModel() {
+					this.myOwnName = ko.observable($("#userName").text());
 				}
-				ko.applyBindings(ViewModel);
+				ko.applyBindings(new ViewModel());
 				
 				myUuid = $("#userUuid").text();
 				myName = $("#userName").text();
@@ -507,25 +441,14 @@
 			<div class="col-lg-9">
 				<div class="panel panel-default panel-chat">
 					<div class="panel-heading">
-						<span data-bind="attr: { id: toUserUuid }, html: toUserName" class="label label-danger toUserName"
-							style="font-size: 15px;"></span>
+						<span id="none" class="label label-danger toUserName"
+							style="font-size: 15px;"><strong>xxx</strong></span>
 						<button type="button" class="close" onclick="closeChatDialog()">
 							<span aria-hidden="true">&times;</span><span class="sr-only">Close</span>
 						</button>
 					</div>
 					<div class="panel-body main_div">
-						<ol id="chat_content2" data-bind="foreach: chatMsgs">
-<!-- 							msg come -->
-							<li class="guestSession clear" data-bind="if: $data.direct=='come'">
-								<div class="sessionTime" data-bind="text: time"></div>
-		  						<div class="guest">
-		      						<img data-bind="attr: { src: head }" width="50" height="50" alt="">
-		  						</div>
-							    <blockquote class="left">
-							      <p data-bind="text: msg"></p>
-							    </blockquote>
-							</li>
-<!-- 							msg send -->
+						<ol id="chat_content2">
 						</ol>
 					</div>
 					<div class="panel-footer">

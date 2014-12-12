@@ -60,6 +60,7 @@ public class ControllerExtend extends Controller{
 						ConcurrentHashMap<String, String> userSessionMap = UserSession.getInstance().userWithPushletSession;
 						to = userSessionMap.get(to);
 					}
+					debug("doPublish() event=" + aCommand.reqEvent+ ":"+ aCommand.reqEvent.getField("msg"));
 					Dispatcher.getInstance().unicast(aCommand.reqEvent, to);
 				} else {
 					// No to: multicast
