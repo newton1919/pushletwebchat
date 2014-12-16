@@ -224,7 +224,11 @@
 			var person = person_list[index];
 			//console.log(person);
 			var userUuid2 = person.userUuid;
-			var userName2 = person.userName;
+			var userName3 = person.userName;
+			if (userName3 == "" || typeof(userName3) == "undefined") {
+				continue;
+			}
+			var userName2 = decodeUTF8(userName3);
 			if (userUuid2 == "" || userName2 == myName) {
 				continue;
 			}
@@ -390,7 +394,6 @@
 				
 				myUuid = $("#userUuid").text();
 				myName = $("#userName").text();
-				
 				p_join_listen('/queryOnline');
 
 				//绑定beforeunload事件

@@ -22,6 +22,7 @@ public class Register extends HttpServlet{
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		// TODO Auto-generated method stub
 		try {
+			req.setCharacterEncoding("utf8");
 			String userName = req.getParameter("userName");
 			String password = req.getParameter("password");
 			String password2 = req.getParameter("password2");

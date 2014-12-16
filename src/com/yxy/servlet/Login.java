@@ -48,6 +48,7 @@ public class Login extends HttpServlet {
 	 */
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		// TODO Auto-generated method stub
+		request.setCharacterEncoding("utf8");
 		String userName = request.getParameter("userName");
 		String password = request.getParameter("password");
 		UserDao userDao = new UserDao();

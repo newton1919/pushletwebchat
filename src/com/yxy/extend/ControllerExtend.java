@@ -1,5 +1,6 @@
 package com.yxy.extend;
 
+import java.net.URLEncoder;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -9,6 +10,7 @@ import org.json.JSONObject;
 
 import com.yxy.dao.UserDao;
 import com.yxy.mo.UserMO;
+import com.yxy.utils.Utf8Encode;
 
 import nl.justobjects.pushlet.core.Command;
 import nl.justobjects.pushlet.core.Controller;
@@ -106,14 +108,14 @@ public class ControllerExtend extends Controller{
 					obj.put("p_id", p_id);
 					obj.put("userUuid", userUuid);
 					UserMO user = userDao.findUserbyId(userUuid);
-					obj.put("userName", user.getUserName());
+					obj.put("userName", Utf8Encode.utf8ToUnicode(user.getUserName()));
 					obj.put("online", user.isOnline());
 				} else {
 					obj.put("p_id", p_id);
 					obj.put("userUuid", "");
 				}
 				
-			} catch (JSONException e) {
+			} catch (Exception e) {
 				e.printStackTrace();
 			}
 			array.put(obj);
