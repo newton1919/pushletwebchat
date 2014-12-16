@@ -22,7 +22,9 @@
 }
 .panel-contact {
 	margin-top: 0px;
-	min-height: 600px;
+	height: 600px;
+	overflow-y: auto;
+	overflow-x: hidden;
 }
 
 .panel-chat {
@@ -146,7 +148,7 @@
 <script type="text/javascript" src="html/js/util.js"></script>
 <script type="text/javascript" src="html/js/hashmap.js"></script>
 <script type="text/javascript" src="html/js/knockout.js"></script>
-
+<script type="text/javascript" src="html/js/dateTime.js"></script>
 <script type="text/javascript">
 	function encodeUTF8(str) {
 		var temp = "", rs = "";
@@ -188,7 +190,8 @@
 		if (action == 'send') {
 			var fromName = event.get('from');
 			var message = event.get('msg');
-			handleComeMsg(fromName, message);
+			var time = event.get('time');
+			handleComeMsg(fromName, message, time);
 		} else if (action == 'enter') {
 			var enter_uuid = event.get("userUuid");
 			var enter_name = event.get("userName");
@@ -232,25 +235,6 @@
 			p_map.put(userName2, userUuid2);
 			//新增绑定
 			var newViewModel = {
-				chatToUser: function(data, event) {//todo
-					ViewModel.toUserUuid(event.target.id);
-					ViewModel.toUserName(event.target.innerHTML);
-					$(".panel-chat").css("display", "block");
-					ViewModel.chatMsgs(allMsgMap.get(event.target.id));
-					/*
-					//pull msg unread
-					var toUserName = ViewModel.toUserName().split("<")[0];
-					var toUserUuid = ViewModel.toUserUuid();
-					var msgArray = unreadMsgMap.get(toUserUuid);
-					for ( var index in msgArray) {
-						var msg = msgArray[index];
-						displayComeMsgToChatPanel(toUserName, msg);
-					}
-					$("a#" + toUserUuid + " .badge").remove();
-					//内存清空未读消息
-					unreadMsgMap.remove(toUserUuid);
-					console.log("##############");*/
-				},
 			};
 			ko.applyBindings(newViewModel, document.getElementById(userUuid2));
 		}
@@ -258,10 +242,14 @@
 	function addOnlineUser(enter_uuid, enter_name) {
 		if (p_map.keySet().indexOf(enter_name) == -1) {
 			var person_html = $('<a id="' + enter_uuid
-					+ '" class="list-group-item" onclick="chatTo(event)">'
+					+ '" class="list-group-item" data-bind="click:chatToUser">'
 					+ enter_name + '</a>');
 			$("#userListPanel").append(person_html);
 			p_map.put(enter_name, enter_uuid);
+			//新增绑定
+			var newViewModel = {
+			};
+			ko.applyBindings(newViewModel, document.getElementById(enter_uuid));
 		}
 	}
 	//somebody offline
@@ -269,73 +257,58 @@
 		$("#userListPanel").find("#" + exit_uuid).remove();
 		p_map.remove(exit_name);
 	}
-
-	function chatTo(event) {
-		var toUserUuid = event.target.id;
-		var toUserName = event.target.innerHTML;
-		toUserName = toUserName.split("<")[0];
+	function chatToUser(data, event) {//todo
+		$("a#" + event.target.id + " .badge").remove();
+		ViewModel.toUserUuid(event.target.id);
+		ViewModel.toUserName(event.target.innerHTML);
 		$(".panel-chat").css("display", "block");
-		$(".toUserName").html(toUserName);
-		$(".toUserName").attr("id", toUserUuid);
-		//pull msg unread
-		var msgArray = unreadMsgMap.get(toUserUuid);
-		for ( var index in msgArray) {
-			var msg = msgArray[index];
-			displayComeMsgToChatPanel(toUserName, msg);
+		var msgWithUser = allMsgMap.get(event.target.id);
+		var msgWithUserArray = new Array();
+		for (var index in msgWithUser) {
+			msgWithUserArray.push(msgWithUser[index]);
 		}
-		$("a#" + toUserUuid + " .badge").remove();
-		//内存清空未读消息
-		unreadMsgMap.remove(toUserUuid);
+		ViewModel.chatMsgs(msgWithUserArray);
+		$('#chat_content2').stop().animate({
+			scrollTop : $("#chat_content2")[0].scrollHeight
+		}, 800);
 	}
+	
 	function closeChatDialog() {
 		$(".panel-chat").css("display", "none");
 	}
 
 	function sendMsg(event) {
+		var currentTime = CurentTime();
 		var toUserUuid = $(".toUserName").attr("id");
 		var msgToSend = encodeUTF8(document.getElementById("msgContent").value);
 		p_publish('/chat', 'action', 'send', 'from', myName, 'p_to',
-				toUserUuid, 'msg', msgToSend);
-		//add my talk to chat panel
-		var msg_go = '<li class="ownerSession clear" data-user="{to_user}">\
-								<div class="sessionTime">{time}</div>\
-							  	<div class="owner">\
-							      	<img src="{own_head}" width="50" height="50" alt="">\
-							  	</div>\
-							    <blockquote class="right">\
-							      <p>{msg}</p>\
-							    </blockquote>\
-							</li>';
-		var data_after = {
-			"time" : "2014",
-			"to_user" : toUserUuid,
-			"msg" : document.getElementById("msgContent").value,
-			"own_head" : "html/images/cat_uncle_small.jpg"
-		};
-		var msg_go_after = substitute(msg_go, data_after);
-		var $ownerSession = $(msg_go_after);
-		$("#chat_content2").append($ownerSession);
-		$('#chat_content2').stop().animate({
-			scrollTop : $("#chat_content2")[0].scrollHeight
-		}, 800);
-
-		$("#msgContent").val("");
-		$("#msgContent").focus();
+				toUserUuid, 'msg', msgToSend, 'time', currentTime);
+		
 		//将发送的消息存入内存map中
 		var msgsWithUser = allMsgMap.get(toUserUuid);
 		var msgObj = {
 				"direct": "go",
 				"read": "yes",
 				"msg": document.getElementById("msgContent").value,
-				"time": "2014",
+				"time": currentTime,
+				"head": "html/images/cat_uncle_small.jpg",
 		};
 		if (typeof(msgsWithUser) == "undefined") {
-			var msgArray = new Array();	
-			msgArray.push(msgObj);
-			allMsgMap.put(toUserUuid, msgArray);
+			var msgArray2 = new Array();	
+			msgArray2.push(msgObj);
+			allMsgMap.put(toUserUuid, msgArray2);
 		} else {
 			msgsWithUser.push(msgObj);
+			allMsgMap.put(toUserUuid, msgsWithUser);
 		}
+		
+		//add my talk to chat panel
+		ViewModel.chatMsgs(allMsgMap.get(toUserUuid));
+		$('#chat_content2').stop().animate({
+			scrollTop : $("#chat_content2")[0].scrollHeight
+		}, 800);
+		$("#msgContent").val("");
+		$("#msgContent").focus();
 	}
 
 	/**
@@ -349,39 +322,15 @@
 			return (o[name] === undefined) ? '' : o[name];
 		});
 	}
-
-	function displayComeMsgToChatPanel(fromName, message) {
-		var msg_come = '<li class="guestSession clear" data-user="{msg_from}">\
-			<div class="sessionTime">{time}</div>\
-		  	<div class="guest">\
-		      	<img src="{guest_head}" width="50" height="50" alt="">\
-		  	</div>\
-		    <blockquote class="left">\
-		      <p>{msg}</p>\
-		    </blockquote>\
-		</li>';
-		var data_after = {
-			"time" : "2014-12-01",
-			"msg_from" : fromName,
-			"msg" : message,
-			"guest_head" : "html/images/asha.jpg"
-		};
-		var msg_come_after = substitute(msg_come, data_after);
-		var $guestSession = $(msg_come_after);
-		$("#chat_content2").append($guestSession);
-		$('#chat_content2').stop().animate({
-			scrollTop : $("#chat_content2")[0].scrollHeight
-		}, 800);
-	}
 	
-	function storeComeMsgToMap(fromUuid, message, readTag) {
+	function storeComeMsgToMap(fromUuid, message, readTag, time) {
 		//将 来的消息放入内容map中
 		var msgsWithUser = allMsgMap.get(fromUuid);
 		var msgObj = {
 				"direct": "come",
 				"read": readTag,
 				"msg": message,
-				"time": "2014-12-01",
+				"time": time,
 				"head": "html/images/asha.jpg",
 		};
 		if (typeof(msgsWithUser) == "undefined") {
@@ -394,32 +343,29 @@
 		//end
 	}
 	//显示来得消息
-	function handleComeMsg(fromName, messageCome) {
+	function handleComeMsg(fromName, messageCome, time) {
 		var message = decodeUTF8(messageCome);
 		var fromUuid = p_map.get(fromName);
 		
 		if ($(".panel-chat").css("display") == "block"
 				&& fromName == $(".toUserName").html()) {
-			displayComeMsgToChatPanel(fromName, message);
-			storeComeMsgToMap(fromUuid, message, "yes");
+			storeComeMsgToMap(fromUuid, message, "yes", time);
+			ViewModel.chatMsgs(allMsgMap.get(fromUuid));
+			$('#chat_content2').stop().animate({
+				scrollTop : $("#chat_content2")[0].scrollHeight
+			}, 800);
 		} else {
 			//将消息显示为通知，因为消息来源不是当前聊天用户
 			var badge = $("a#" + fromUuid).find(".badge");
 			if (badge.length > 0) {
 				var unreadMsgCount = badge.text();
 				badge.html(parseInt(unreadMsgCount) + 1);
-				//将未读信息加入内存中
-				var msgArray = unreadMsgMap.get(fromUuid);
-				msgArray.push(message);
 			} else {
 				var newBadge = $('<span class="badge">1</span>');
 				$("a#" + fromUuid).append(newBadge);
-				//将未读信息加入内存中
-				var msgArray = new Array();
-				msgArray.push(message);
-				unreadMsgMap.put(fromUuid, msgArray);
 			}
-			storeComeMsgToMap(fromUuid, message, "no");
+			
+			storeComeMsgToMap(fromUuid, message, "no", time);
 		}
 	}
 	
@@ -428,7 +374,6 @@
 	//var nick=getPageParameter('nick', 'anon');
 	var p_id = "";
 	var p_map = new Map();
-	var unreadMsgMap = new Map();
 	var allMsgMap = new Map();
 	var myUuid = "";
 	var myName = "";
@@ -438,7 +383,7 @@
 					myOwnName: ko.observable($("#userName").text()),
 					toUserUuid: ko.observable("none"),
 					toUserName: ko.observable("<strong>xxx</strong>"),
-					chatMsgs: ko.observableArray([]),
+					chatMsgs: ko.observableArray([""]),
 					//todo
 				}
 				ko.applyBindings(ViewModel);
@@ -526,6 +471,15 @@
 							    </blockquote>
 							</li>
 <!-- 							msg send -->
+							<li class="ownerSession clear" data-bind="if: $data.direct=='go'">
+								<div class="sessionTime" data-bind="text: time"></div>
+							  	<div class="owner">
+							      	<img data-bind="attr: { src: head }" width="50" height="50" alt="">
+							  	</div>
+							    <blockquote class="right">
+							      <p data-bind="text: msg"></p>
+							    </blockquote>
+							</li>
 						</ol>
 					</div>
 					<div class="panel-footer">
