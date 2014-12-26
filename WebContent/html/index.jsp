@@ -15,9 +15,27 @@
 #ownName {
 	padding-left:60px !important;
 }
+.enableNotice {
+	margin-top: 70px !important;
+	margin-bottom: 24px !important;
+}
+.enableNotice .tooltip {
+	position: relative;
+	display: inline-block;
+	margin: 10px 20px;
+	opacity: 1;
+}
+
+.enableNotice .tooltip-inner {
+	background-color: #FFA500 !important;	
+}
+.enableNotice .tooltip-arrow {
+	border-bottom-color: #FFA500 !important;	
+}
+
 .panel-head {
 	margin-top: 70px !important;
-	margin-bottom: 35px !important;
+	margin-bottom: 24px !important;
 	padding-left: 10px;
 }
 .panel-contact {
@@ -350,7 +368,13 @@
 	function handleComeMsg(fromName, messageCome, time) {
 		var message = decodeUTF8(messageCome);
 		var fromUuid = p_map.get(fromName);
-		
+		//如果当前页面失去焦点，则显示为桌面通知
+		if ($.fn.notice.activeTag) {
+			
+		} else {
+			$.fn.notice.message.notice(fromName, message, "");
+		}
+		//end
 		if ($(".panel-chat").css("display") == "block"
 				&& fromName == $(".toUserName").html()) {
 			storeComeMsgToMap(fromUuid, message, "yes", time);
@@ -373,9 +397,264 @@
 		}
 	}
 	
+	//检测浏览器是否支持桌面通知
+	(function ($) {
+		if({}.__proto__) {
+			// mozilla & webkit expose the prototype chain directly
+			$.namespace=function (name) {
+				$.fn[name]=function namespace() {
+					// insert this function in the prototype chain
+					this.__proto__=arguments.callee;
+					return this;
+				};
+				$.fn[name].__proto__=$.fn;
+			};
+			$.fn.$=function () {
+				this.__proto__=$.fn;
+				return this;
+			};
+		}
+		else {
+			// every other browser; need to copy methods
+			$.namespace=function (name) {
+				$.fn[name]=function namespace() {
+					return this.extend(arguments.callee);
+				};
+			};
+			$.fn.$=function () {
+				// slow but restores the default namespace
+				var len=this.length;
+				this.extend($.fn);
+				this.length=len;
+				// $.fn has length = 0, which messes everything up
+				return this;
+			};
+		}
+	})(jQuery);
+
+	/***
+	*
+	*@author zhhaogen@163.com
+	*
+	**/
+	$.namespace('notice');
+	$.fn.notice.message=
+	{
+		ieinjur:false,
+		pmdtid:null,
+		title:null,
+		shtid:null,
+		wstid:null,
+		//播放声音
+		playSound:function(src)
+		{
+			var div=document.getElementById("playercnt");//播放div
+			if(div==null)
+			{
+				div=document.createElement("div");
+				div.id="playercnt";
+				div.setAttribute("style","display:none");
+				document.body.appendChild(div);
+			}
+			if(document.createElement('audio').play==null)
+			{
+				//ie
+				div.innerHTML="<EMBED id='player' src='"+src+"' hidden='true'  loop='false' autostart='true'>";
+			}else
+			{
+				div.innerHTML="<audio id='player' src='"+src+"' hidden autoplay></audio>";
+			}
+		},
+		//标题栏跑马灯
+		titleScroll:function(msg,ops)
+		{
+			if(this.pmdtid!=null)
+			{
+				clearInterval(this.pmdtid);
+				document.title=this.title;
+				this.pmdtid=null;
+			}
+			if(ops=="stop")
+			{
+				 clearInterval(this.pmdtid);
+				 document.title=this.title;
+				 this.pmdtid=null;
+				 return;
+			}
+			this.title=document.title;
+			var n=0;
+			var max=parseInt(ops)||1000;
+			var pmd=function()
+			{
+				msg=msg+msg.substr(0,1);
+				msg=msg.substr(1);
+				document.title=msg+"  "+$.fn.notice.message.title;//原来标题加上消息标题
+				n++;
+				if(n>max)
+				{
+					clearInterval($.fn.notice.message.pmdtid);
+					document.title=$.fn.notice.message.title;
+				}
+			}
+			this.pmdtid=setInterval(pmd,600);
+		},
+		//标题栏闪烁
+		titleShan:function(msg,ops)
+		{
+			if(this.shtid!=null)
+			{
+				clearInterval(this.shtid);
+				document.title=this.title;
+				this.shtid=null;
+			}
+			if(ops=="stop")
+			{
+				 clearInterval(this.shtid);
+				 document.title=this.title;
+				this.shtid=null;
+				 return;
+			}
+			this.title=document.title;
+			var space="  ";
+			for(var i=0;i<msg.length;i++)
+			{
+				space=space+"  ";
+			}
+			var n=0;
+			var max=parseInt(ops)||1000;
+			var pmd=function()
+			{
+				if (n % 2 == 0) 
+				{   
+						document.title = "【"+msg+"】" + $.fn.notice.message.title;   
+	            }else
+				{   
+						document.title = "【"+space+"】" + $.fn.notice.message.title; 
+	            };   
+				n++;
+				if(n>max)
+				{
+					clearInterval($.fn.notice.message.shtid);
+					document.title=$.fn.notice.message.title;
+				}
+			}
+			this.shtid=setInterval(pmd,600);
+		},
+		//窗口闪动
+		windowShan:function(ops)
+		{
+			clearInterval(this.wstid);
+			if(ops=="stop")
+			{
+				 clearInterval(this.wstid);
+				 return;
+			}
+			var n=0;
+			var max=parseInt(ops)||20;
+			var pmd=function()
+			{
+				if (n % 2 == 0) 
+				{   
+						window.moveBy(5,0); 
+	            }else
+				{   
+						window.moveBy(-5,0);
+	            };   
+				n++;
+				if(n>max)
+				{
+					clearInterval($.fn.notice.message.wstid);
+				}
+			}
+			this.wstid=setInterval(pmd,200);
+		},	//桌面通知权限
+		noticeinit:function()
+		{
+			if(window.webkitNotifications)
+			{
+				
+				if (window.webkitNotifications.checkPermission() != 0) 
+				{
+					console.log("chrome 桌面通知请求");
+					window.webkitNotifications.requestPermission();
+				}
+				 
+			}else if (window.Notification && Notification.permission !== "granted") 
+			{
+				Notification.requestPermission(function (status) 
+				{
+				  if (Notification.permission !== status) 
+				  {
+					Notification.permission = status;
+				  }
+				});
+			}else
+			{
+				//ie
+				//注入vbscript	
+				if(!this.ieinjur)
+				{
+				var d=document.createElement("script");	
+				d.type="text/vbscript";
+				d.text ="Function noticeie(title,body) MsgBox body,64,title  End Function";
+				var head = document.getElementsByTagName("head")[0] ||document.documentElement;
+				head.appendChild(d);
+				this.ieinjur=true;	
+				}			
+			}
+		},
+		//桌面通知
+		notice:function(title,msg,icon)
+		{
+			if(window.webkitNotifications)
+			{
+				if(window.webkitNotifications.checkPermission() != 0)
+				{
+					$.fn.notice.message.noticeinit();
+				}
+				else
+				{
+					console.log("webkit 通知");
+					var n = webkitNotifications.createNotification(icon,title, msg);
+					n.show();
+					n.ondisplay = function() { };   
+					n.onclose = function() { };  
+					var cancel=function(){n.cancel();};
+					setTimeout(cancel, 5000); 
+				}
+	 
+			}		
+			else if (window.Notification) 
+			{
+				if(Notification.permission == "granted")
+				{
+					console.log("firefox 通知");
+					var n = new Notification(title,{ icon:icon,body:msg});
+					var cancel=function(){n.close();};
+					setTimeout(cancel, 5000);
+				}else
+				{
+					$.fn.notice.message.noticeinit();
+				}	
+			}else//ie
+			{
+				try
+				{
+				noticeie(title,msg);
+				}catch(ee)
+				{
+				}
+		
+			}
+		}
+	}
+	function enableNoticeCmd() {
+		$.fn.notice.message.noticeinit();
+	}
 	
 	//js开始执行的地方
 	//var nick=getPageParameter('nick', 'anon');
+	$.fn.notice.activeTag = true;
 	var p_id = "";
 	var p_map = new Map();
 	var allMsgMap = new Map();
@@ -413,7 +692,19 @@
 						$(".btn-send").click();
 					}
 				});
+				document.onclick=function(){
+					//$.fn.notice.message.noticeinit();
+					//$.fn.notice.message.notice("title", "msg", "");
+				}; 
+				$(window).focus(function() {
+				    //处于激活状态
+					$.fn.notice.activeTag = true;
+				});
 
+				$(window).blur(function() {
+				    //处于未激活状态
+					$.fn.notice.activeTag = false;
+				});
 			});
 </script>
 </head>
@@ -434,6 +725,16 @@
 					</div>
 				</div>
 			</div>
+			<div class="col-lg-9">
+			  <div class="enableNotice">
+				<div class="tooltip bottom" role="tooltip">
+			      <div class="tooltip-arrow"></div>
+			      <div class="tooltip-inner">
+			        新增桌面通知功能&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="javascript:void(0);" onclick="enableNoticeCmd()">立即开启</a>
+			      </div>
+			    </div>
+			  </div>
+			</div>    
 		</div>
 		<div class="row">
 			<div class="col-lg-3">
